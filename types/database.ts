@@ -25,6 +25,7 @@ export interface Database {
           email?: string
           created_at?: string
         }
+        Relationships: []
       }
       customers: {
         Row: {
@@ -48,6 +49,7 @@ export interface Database {
           plan?: string
           created_at?: string
         }
+        Relationships: []
       }
       tracked_apps: {
         Row: {
@@ -74,6 +76,14 @@ export interface Database {
           snippet_key?: string
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "tracked_apps_customer_id_fkey"
+            columns: ["customer_id"]
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       events: {
         Row: {
@@ -106,6 +116,14 @@ export interface Database {
           metadata?: Json | null
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "events_app_id_fkey"
+            columns: ["app_id"]
+            referencedRelation: "tracked_apps"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_sessions: {
         Row: {
@@ -138,6 +156,14 @@ export interface Database {
           score?: number
           rescued_at?: string | null
         }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_app_id_fkey"
+            columns: ["app_id"]
+            referencedRelation: "tracked_apps"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       triggers: {
         Row: {
@@ -170,6 +196,14 @@ export interface Database {
           active?: boolean
           created_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "triggers_app_id_fkey"
+            columns: ["app_id"]
+            referencedRelation: "tracked_apps"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: Record<string, never>
