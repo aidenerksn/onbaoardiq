@@ -329,19 +329,19 @@ function DashboardPreview() {
 
 const plans = [
   {
-    name: "Starter", monthly: 29, annual: 23, plan: "starter",
+    name: "Starter", monthly: 99, annual: 79, plan: "starter",
     description: "For solo founders validating product-market fit.",
     features: ["1 tracked app", "Up to 500 sessions / mo", "Behavioral scoring", "1 rescue trigger", "Email support"],
     cta: "Start free trial", popular: false,
   },
   {
-    name: "Growth", monthly: 79, annual: 63, plan: "growth",
+    name: "Growth", monthly: 299, annual: 239, plan: "growth",
     description: "For growing teams with real trial volume.",
     features: ["5 tracked apps", "Up to 5,000 sessions / mo", "Behavioral scoring + funnel", "Unlimited rescue triggers", "Custom email templates", "Priority support"],
     cta: "Start free trial", popular: true,
   },
   {
-    name: "Scale", monthly: 199, annual: 159, plan: "scale",
+    name: "Scale", monthly: 799, annual: 639, plan: "scale",
     description: "For scaling SaaS with high trial volume.",
     features: ["Unlimited apps", "Unlimited sessions", "Everything in Growth", "Custom sending domain", "API access", "Dedicated onboarding"],
     cta: "Start free trial", popular: false,
