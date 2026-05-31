@@ -445,11 +445,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
-const stats = [
-  { stat: "70%",  label: "of trial users never return after day one" },
-  { stat: "4 min", label: "before a user decides to stay or leave" },
-  { stat: "$12k", label: "lost monthly to invisible trial churn" },
-]
+const stats: { stat: string; label: string }[] = []
 
 const steps = [
   { icon: Code2,     title: "Install in 5 minutes",          description: "Paste one script tag. No SDK, no engineering sprint. Works on any stack, immediately." },
@@ -466,11 +462,7 @@ const features = [
   { icon: Settings2,        name: "Custom Triggers",       description: "Set your own rules. Score threshold, page visited, time inactive, form abandoned — your call." },
 ]
 
-const testimonials = [
-  { quote: "We were blaming our pricing for low conversion. OnboardIQ showed us 70% of trials dropped off on the integrations page. We rewrote it and conversion went up 22% in three weeks.", name: "Marcus T.", company: "B2B workflow automation, 14 people", result: "+22% conversion" },
-  { quote: "I used to manually email every trial user on day three. Now OnboardIQ does it automatically, personalized to exactly where they left off. I got my Fridays back.", name: "Priya S.", company: "Solo founder, HR onboarding SaaS", result: "Hours saved weekly" },
-  { quote: "I've tried three analytics tools. None told me anything I could act on. OnboardIQ rescued 11 trials last month that would have just gone dark.", name: "Jordan K.", company: "Client reporting SaaS for agencies", result: "11 trials rescued" },
-]
+const testimonials: { quote: string; name: string; company: string; result: string }[] = []
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -568,10 +560,6 @@ export default function Home() {
               <WaitlistForm />
             </motion.div>
 
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.85 }}
-              className="mt-5 text-sm text-white/25">
-              Join 200+ founders already on the waitlist
-            </motion.p>
           </div>
 
           {/* Right — live widget */}
@@ -581,20 +569,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ── Stats ── */}
-      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, amount: 0.2 }}
-          variants={staggerContainer}
-          className="grid gap-px overflow-hidden rounded-2xl border border-white/[0.08] sm:grid-cols-3">
-          {stats.map((s) => (
-            <motion.div key={s.stat} variants={staggerItem}
-              className="flex flex-col gap-2 bg-white/[0.025] p-8 text-center backdrop-blur-sm hover:bg-white/[0.04] transition-colors">
-              <span className="bg-gradient-to-r from-violet-300 to-fuchsia-300 bg-clip-text text-5xl font-extrabold text-transparent">{s.stat}</span>
-              <span className="text-sm leading-snug text-white/40">{s.label}</span>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
 
       {/* ── How it works ── */}
       <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
@@ -653,29 +627,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ── Testimonials ── */}
-      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
-        <ScrollReveal className="mb-14 text-center">
-          <p className="mb-3 text-xs font-bold tracking-widest text-violet-400 uppercase">Social proof</p>
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">Founders who stopped guessing.</h2>
-        </ScrollReveal>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {testimonials.map((t, i) => (
-            <ScrollReveal key={t.name} variants={i === 0 ? slideLeft : i === 2 ? slideRight : fadeUp} delay={i === 1 ? 0.1 : 0}>
-              <div className="flex h-full flex-col gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-6 transition-all hover:border-white/15 hover:bg-white/[0.04]">
-                <div className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
-                  {t.result}
-                </div>
-                <p className="flex-1 text-sm leading-relaxed text-white/55">&ldquo;{t.quote}&rdquo;</p>
-                <div className="border-t border-white/[0.08] pt-4">
-                  <p className="text-sm font-semibold text-white">{t.name}</p>
-                  <p className="text-xs text-white/30">{t.company}</p>
-                </div>
-              </div>
-            </ScrollReveal>
-          ))}
-        </div>
-      </section>
 
       {/* ── Pricing ── */}
       <section id="pricing" className="relative z-10 w-full max-w-5xl px-6 pb-28">
@@ -740,12 +691,17 @@ export default function Home() {
 
       {/* ── Footer ── */}
       <footer className="relative z-10 w-full border-t border-white/[0.06] px-6 py-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between text-xs text-white/25">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <LogoMark size={20} />
-            <span>Onboard<span className="text-violet-400">IQ</span></span>
+            <span className="text-xs text-white/25">Onboard<span className="text-violet-400">IQ</span></span>
           </div>
-          <span>© {new Date().getFullYear()} OnboardIQ. All rights reserved.</span>
+          <div className="flex flex-wrap gap-5 text-xs text-white/25">
+            <a href="/privacy" className="transition-colors hover:text-white/50">Privacy Policy</a>
+            <a href="/terms" className="transition-colors hover:text-white/50">Terms of Service</a>
+            <a href="/dpa" className="transition-colors hover:text-white/50">DPA</a>
+          </div>
+          <span className="text-xs text-white/20">© {new Date().getFullYear()} OnboardIQ. All rights reserved.</span>
         </div>
       </footer>
     </main>
