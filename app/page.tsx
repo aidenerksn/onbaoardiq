@@ -1,8 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { WaitlistForm } from "@/components/WaitlistForm"
-import { Badge } from "@/components/ui/badge"
 import {
   Code2,
   Activity,
@@ -14,144 +13,211 @@ import {
   Mail,
   Settings2,
   ChevronDown,
-  ChevronUp,
 } from "lucide-react"
+import {
+  motion,
+  useScroll,
+  useTransform,
+  AnimatePresence,
+  Variants,
+} from "framer-motion"
+
+// ── Animation variants ────────────────────────────────────────────────────────
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
+  }),
+}
+
+const fadeIn: Variants = {
+  hidden: { opacity: 0 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    transition: { duration: 0.5, ease: "easeOut", delay },
+  }),
+}
+
+const slideLeft: Variants = {
+  hidden: { opacity: 0, x: -40 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
+  }),
+}
+
+const slideRight: Variants = {
+  hidden: { opacity: 0, x: 40 },
+  visible: (delay = 0) => ({
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1], delay },
+  }),
+}
+
+const staggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+  },
+}
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
+}
+
+// ── Scroll-triggered wrapper ──────────────────────────────────────────────────
+
+function ScrollReveal({
+  children,
+  variants = fadeUp,
+  delay = 0,
+  className = "",
+}: {
+  children: React.ReactNode
+  variants?: Variants
+  delay?: number
+  className?: string
+}) {
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.15 }}
+      custom={delay}
+      variants={variants}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  )
+}
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const stats = [
-  {
-    stat: "62%",
-    description:
-      "Of SaaS trial users never come back after their first session. Not because your product is bad — because nobody caught them at the moment they got confused.",
-  },
-  {
-    stat: "4 min",
-    description:
-      "The average time a new user spends before deciding whether to continue or quit. You have four minutes to show value. Most products waste two of them on a welcome email.",
-  },
-  {
-    stat: "$12,000",
-    description:
-      "What the average SaaS founder loses monthly to trial churn they never see coming. It shows up as a flat growth curve. The cause stays invisible.",
-  },
+  { stat: "62%", label: "of trials never return after session one" },
+  { stat: "4 min", label: "before a user decides to stay or leave" },
+  { stat: "$12k", label: "lost monthly to invisible trial churn" },
 ]
 
 const steps = [
   {
     icon: Code2,
-    title: "Install one line of code",
-    description:
-      "Paste a single script tag into your app. No SDK to configure, no events to manually track, no engineering sprint required. It starts working immediately.",
+    step: "01",
+    title: "One line of code",
+    description: "Paste a single script tag. No SDK, no event tracking, no engineering sprint. Works immediately.",
   },
   {
     icon: Activity,
-    title: "Watch who's struggling in real time",
-    description:
-      "OnboardIQ scores every session from 0–100 based on behavior — rage clicks, form abandons, time on page, pages reached. You see exactly who is healthy, wavering, or about to leave.",
+    step: "02",
+    title: "See who's struggling",
+    description: "Every session gets scored 0–100 in real time. Rage clicks, form abandons, dead ends — all captured.",
   },
   {
     icon: Zap,
+    step: "03",
     title: "Rescue them automatically",
-    description:
-      "When a user's score drops below your threshold, OnboardIQ fires a personalized email with the last page they visited, how long they've been gone, and a direct link back in.",
+    description: "Score drops below your threshold, a personalized email fires. Last page visited, time gone, link back in.",
   },
 ]
 
 const features = [
-  {
-    icon: Brain,
-    name: "Drop-off Detection",
-    description:
-      "Pinpoints the exact page and moment where your trial users lose momentum — not just that they churned, but where and why.",
-  },
-  {
-    icon: Activity,
-    name: "Behavioral Scoring",
-    description:
-      "Every session gets a real-time score from 0–100 based on actual behavior, so you always know who needs attention before they disappear.",
-  },
-  {
-    icon: Mail,
-    name: "Automated Rescue Emails",
-    description:
-      "Sends personalized, trigger-based emails the moment a user's score falls — no manual follow-up, no batch campaigns, no blast-and-pray.",
-  },
-  {
-    icon: BarChart3,
-    name: "Funnel Visualization",
-    description:
-      "See your entire onboarding flow as a live funnel. Spot the steps with the highest drop-off and fix them with data, not gut feel.",
-  },
-  {
-    icon: MousePointerClick,
-    name: "Rage-Click Detection",
-    description:
-      "Flags when users repeatedly hammer the same element — a reliable signal of frustration you'd never catch any other way.",
-  },
-  {
-    icon: Settings2,
-    name: "Custom Trigger Rules",
-    description:
-      "Define exactly when and how OnboardIQ acts. Set conditions by score, page visited, time inactive, or form abandoned — your rules, your thresholds.",
-  },
+  { icon: Brain, name: "Drop-off Detection", description: "Pinpoints the exact page where users lose momentum — not just that they churned, but where and why." },
+  { icon: Activity, name: "Behavioral Scoring", description: "Real-time 0–100 score per session based on actual behavior. Know who needs help before they leave." },
+  { icon: Mail, name: "Automated Rescue", description: "One email per at-risk session. Triggered by behavior, personalized to their journey. Not a drip campaign." },
+  { icon: BarChart3, name: "Funnel Visualization", description: "Your entire onboarding flow as a live funnel. Spot drop-off points. Fix them with data." },
+  { icon: MousePointerClick, name: "Rage-Click Detection", description: "Flags when users hammer the same element — a frustration signal you'd never catch otherwise." },
+  { icon: Settings2, name: "Custom Triggers", description: "Set your own rules. Score threshold, page visited, time inactive, form abandoned — your call." },
 ]
 
 const testimonials = [
   {
-    quote:
-      "We were blaming our pricing for low conversion. OnboardIQ showed us 70% of trials were dropping off on the integrations page. We rewrote that one page and conversion went up 22% in three weeks.",
+    quote: "We were blaming our pricing for low conversion. OnboardIQ showed us 70% of trials dropped off on the integrations page. We rewrote it and conversion went up 22% in three weeks.",
     name: "Marcus T.",
-    company: "Founder, B2B workflow automation tool",
+    company: "B2B workflow automation, 14 people",
+    result: "+22% conversion",
   },
   {
-    quote:
-      "I used to send a manual check-in email to every trial user on day three. Now OnboardIQ does it automatically, personalized to exactly where they left off. I got my Fridays back and conversion is up.",
+    quote: "I used to manually email every trial user on day three. Now OnboardIQ does it automatically, personalized to exactly where they left off. I got my Fridays back.",
     name: "Priya S.",
     company: "Solo founder, HR onboarding SaaS",
+    result: "Hours saved weekly",
   },
   {
-    quote:
-      "Skeptical at first — I've tried three other analytics tools and none told me anything I could act on. OnboardIQ is different because it doesn't just show you data, it does something about it. Rescued 11 trials last month that would have just gone dark.",
+    quote: "I've tried three analytics tools. None told me anything I could act on. OnboardIQ rescued 11 trials last month that would have just gone dark.",
     name: "Jordan K.",
-    company: "Co-founder, client reporting SaaS for agencies",
+    company: "Client reporting SaaS for agencies",
+    result: "11 trials rescued",
   },
 ]
 
 const faqs = [
-  {
-    q: "My trial conversion is already decent. Why do I need this?",
-    a: '"Decent" hides a lot of money. If you\'re converting 15% of trials, that means 85% are leaving. Even moving from 15% to 20% on 100 trials a month — at $99/month average — is $5,940 in extra MRR. OnboardIQ pays for itself if it rescues six users. It typically rescues more than that in week one.',
-  },
-  {
-    q: "I don't have time to set up another tool.",
-    a: "Installation is one script tag and takes under two minutes. You don't configure events, you don't write tracking code, you don't set up dashboards. The only thing you need to do is decide what score triggers a rescue email — we give you a default to start. Most founders are fully set up inside 10 minutes.",
-  },
-  {
-    q: "I already have Mixpanel / Amplitude / PostHog.",
-    a: "Those tools show you what happened. OnboardIQ shows you who is about to leave and then does something about it. They're not the same product. Most of our customers use both — the analytics platform for product decisions, OnboardIQ for real-time trial rescue.",
-  },
-  {
-    q: "Will this spam my users?",
-    a: "No. OnboardIQ sends one rescue email per session, only when a user's behavioral score drops below the threshold you set. It's triggered by real signals of struggle — not a drip sequence, not a marketing blast. The emails are plain, personal, and relevant to exactly where the user left off.",
-  },
-  {
-    q: "What if my trial users aren't the decision makers?",
-    a: "Then you need them engaged even more. Champions who can't figure out your product don't sell it internally. A rescue email that gets them unstuck is often the thing that turns a confused trial user into an internal advocate.",
-  },
-  {
-    q: "How is this different from Intercom?",
-    a: "Intercom is a support and messaging platform. It's powerful but expensive, complex, and built for teams. OnboardIQ is a focused tool for one job: identifying which trial users are slipping and automatically pulling them back. No support inbox, no live chat widget, no bloat. Just conversion.",
-  },
-  {
-    q: "What if my email deliverability is bad?",
-    a: "OnboardIQ sends through Resend, which has strong deliverability infrastructure. Rescue emails are transactional — triggered by user behavior — so they get better inbox placement than marketing emails. We also recommend setting up your own domain for sending, which takes five minutes and significantly improves trust.",
-  },
-  {
-    q: "What happens to my data? Who can see it?",
-    a: "Your data is stored in your own isolated database partition — we don't store your users' behavioral data on shared infrastructure. Each customer's data is protected with row-level security. We can't see your users' sessions, and neither can anyone else's account.",
-  },
+  { q: "My conversion is already decent. Why do I need this?", a: '"Decent" hides money. Moving from 15% to 20% on 100 trials at $99/month is $5,940 extra MRR. OnboardIQ pays for itself if it rescues six users. Most founders see that in week one.' },
+  { q: "I don't have time to set up another tool.", a: "One script tag. Two minutes. No events to configure, no dashboards to build. Set your rescue threshold and it runs. Most founders are live in under 10 minutes." },
+  { q: "I already have Mixpanel / Amplitude / PostHog.", a: "Those show you what happened. OnboardIQ shows you who is about to leave — and does something about it. Most customers use both. Different jobs." },
+  { q: "Will this spam my users?", a: "One email per session, only when behavior signals real struggle. Plain, personal, relevant. Not a drip sequence. Not a blast. A nudge at exactly the right moment." },
+  { q: "What if my trial users aren't the decision makers?", a: "Then you need them engaged more, not less. A confused champion doesn't sell internally. Getting them unstuck turns a lost trial into an internal advocate." },
+  { q: "How is this different from Intercom?", a: "Intercom is a support platform built for teams. OnboardIQ does one job: find which trials are slipping and pull them back. No inbox, no live chat, no bloat." },
+  { q: "What about email deliverability?", a: "Sends through Resend. Transactional emails get better inbox placement than marketing. Set up your own sending domain in five minutes for even better trust." },
+  { q: "What happens to my data?", a: "Isolated per customer with row-level security. We can't see your users' sessions. Neither can anyone else's account. Your data stays yours." },
 ]
+
+// ── Logo mark ─────────────────────────────────────────────────────────────────
+
+function LogoMark({ size = 64 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Outer ring */}
+      <circle cx="32" cy="32" r="30" stroke="url(#ring)" strokeWidth="1.5" />
+      {/* Inner glow circle */}
+      <circle cx="32" cy="32" r="20" fill="url(#innerGlow)" opacity="0.6" />
+      {/* Bar chart bars */}
+      <rect x="16" y="36" width="6" height="12" rx="2" fill="url(#bar1)" />
+      <rect x="25" y="28" width="6" height="20" rx="2" fill="url(#bar2)" />
+      <rect x="34" y="20" width="6" height="28" rx="2" fill="url(#bar3)" />
+      {/* Rising trend arrow */}
+      <path d="M14 38 L28 24 L36 30 L50 16" stroke="url(#arrow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="50" cy="16" r="3" fill="#a78bfa" />
+      {/* Defs */}
+      <defs>
+        <linearGradient id="ring" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#7c3aed" />
+          <stop offset="1" stopColor="#3b82f6" />
+        </linearGradient>
+        <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+          <stop stopColor="#7c3aed" stopOpacity="0.3" />
+          <stop offset="1" stopColor="#7c3aed" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="bar1" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+          <stop stopColor="#6d28d9" />
+          <stop offset="1" stopColor="#4c1d95" />
+        </linearGradient>
+        <linearGradient id="bar2" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+          <stop stopColor="#7c3aed" />
+          <stop offset="1" stopColor="#5b21b6" />
+        </linearGradient>
+        <linearGradient id="bar3" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+          <stop stopColor="#8b5cf6" />
+          <stop offset="1" stopColor="#6d28d9" />
+        </linearGradient>
+        <linearGradient id="arrow" x1="14" y1="38" x2="50" y2="16" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#a78bfa" />
+          <stop offset="1" stopColor="#60a5fa" />
+        </linearGradient>
+      </defs>
+    </svg>
+  )
+}
 
 // ── FAQ Item ──────────────────────────────────────────────────────────────────
 
@@ -164,15 +230,28 @@ function FaqItem({ q, a }: { q: string; a: string }) {
         className="flex w-full items-start justify-between gap-4 text-left"
       >
         <span className="text-base font-medium text-white">{q}</span>
-        {open ? (
-          <ChevronUp className="mt-0.5 h-5 w-5 shrink-0 text-white/40" />
-        ) : (
-          <ChevronDown className="mt-0.5 h-5 w-5 shrink-0 text-white/40" />
-        )}
+        <motion.div
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-0.5 shrink-0"
+        >
+          <ChevronDown className={`h-5 w-5 ${open ? "text-violet-400" : "text-white/30"}`} />
+        </motion.div>
       </button>
-      {open && (
-        <p className="mt-4 text-sm leading-relaxed text-white/50">{a}</p>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="answer"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <p className="mt-4 text-sm leading-relaxed text-white/50">{a}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -180,172 +259,274 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  return (
-    <main className="relative flex min-h-screen flex-col items-center overflow-hidden bg-[#0a1628]">
-      {/* Background gradient orbs */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-40 left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[120px]"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-1/2 -right-40 h-[400px] w-[400px] -translate-y-1/2 rounded-full bg-indigo-600/15 blur-[100px]"
-      />
+  const heroRef = useRef(null)
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"])
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0])
 
-      {/* Nav */}
-      <nav className="relative z-10 flex w-full max-w-6xl items-center justify-between px-6 py-6">
+  return (
+    <main className="relative flex min-h-screen flex-col items-center overflow-x-hidden bg-[#080e1c]">
+
+      {/* ── Ambient background ── */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-0">
+        <div className="absolute -top-60 left-1/2 h-[700px] w-[700px] -translate-x-1/2 rounded-full bg-violet-700/20 blur-[140px]" />
+        <div className="absolute top-1/3 -right-60 h-[500px] w-[500px] rounded-full bg-blue-600/15 blur-[120px]" />
+        <div className="absolute bottom-0 -left-60 h-[400px] w-[400px] rounded-full bg-violet-900/20 blur-[120px]" />
+      </div>
+
+      {/* ── Nav ── */}
+      <motion.nav
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="relative z-20 flex w-full max-w-6xl items-center justify-between px-6 py-6"
+      >
         <span className="text-lg font-bold tracking-tight text-white">
-          OnboardIQ
+          Onboard<span className="text-violet-400">IQ</span>
         </span>
-        <Badge
-          variant="outline"
-          className="border-blue-500/40 bg-blue-500/10 text-blue-400"
-        >
-          Private Beta
-        </Badge>
-      </nav>
+        <div className="flex items-center gap-4">
+          <span className="hidden text-sm text-white/40 sm:block">Early access open</span>
+          <div className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+        </div>
+      </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="relative z-10 flex w-full max-w-6xl flex-col items-center px-6 pb-24 pt-16 text-center">
-        <Badge
-          variant="outline"
-          className="mb-6 border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-medium tracking-widest text-blue-400 uppercase"
-        >
-          Private Beta — Limited Spots
-        </Badge>
+      <section
+        ref={heroRef}
+        className="relative z-10 flex w-full max-w-5xl flex-col items-center px-6 pb-32 pt-10 text-center"
+      >
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="flex flex-col items-center">
 
-        <h1 className="max-w-4xl text-5xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl lg:text-7xl">
-          You&apos;re losing 60% of your trials.{" "}
-          <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            You just don&apos;t know why.
-          </span>
-        </h1>
+          {/* Logo mark */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="mb-8"
+          >
+            <div className="relative">
+              {/* Glow behind logo */}
+              <div className="absolute inset-0 rounded-full bg-violet-500/20 blur-2xl scale-150" />
+              <LogoMark size={72} />
+            </div>
+          </motion.div>
 
-        <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/60 sm:text-xl">
-          OnboardIQ watches every click, scroll, and rage-click your trial users make — then automatically steps in before they disappear. No analysts. No guesswork. No churn.
-        </p>
+          {/* Brand name under logo */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-6 text-sm font-bold tracking-[0.25em] text-violet-400 uppercase"
+          >
+            OnboardIQ
+          </motion.p>
 
-        <div className="mt-10 flex w-full flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <WaitlistForm />
-        </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.25 }}
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
+            <span className="text-xs font-medium tracking-widest text-violet-400 uppercase">Private Beta — Limited Spots</span>
+          </motion.div>
 
-        <p className="mt-8 text-sm text-white/30">
-          Join 200+ founders already on the waitlist
-        </p>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.35 }}
+            className="max-w-3xl text-5xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-6xl lg:text-7xl"
+          >
+            Stop losing trials
+            <br />
+            <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
+              you could have saved.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            className="mt-6 max-w-lg text-lg leading-relaxed text-white/50"
+          >
+            OnboardIQ tracks every click, rage-click, and abandoned form — then automatically rescues at-risk users before they disappear.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.65 }}
+            className="mt-10 w-full max-w-md"
+          >
+            <WaitlistForm />
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.85 }}
+            className="mt-6 text-sm text-white/25"
+          >
+            Join 200+ founders already on the waitlist
+          </motion.p>
+        </motion.div>
       </section>
 
-      {/* ── Problem ── */}
-      <section className="relative z-10 w-full max-w-6xl px-6 pb-24">
-        <div className="grid gap-6 sm:grid-cols-3">
+      {/* ── Stats ── */}
+      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={staggerContainer}
+          className="grid gap-px overflow-hidden rounded-2xl border border-white/10 sm:grid-cols-3"
+        >
           {stats.map((s) => (
-            <div
+            <motion.div
               key={s.stat}
-              className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
+              variants={staggerItem}
+              className="flex flex-col gap-2 bg-white/[0.03] p-8 text-center backdrop-blur-sm"
             >
-              <p className="mb-3 text-5xl font-extrabold text-white">{s.stat}</p>
-              <p className="text-sm leading-relaxed text-white/50">{s.description}</p>
-            </div>
+              <span className="text-5xl font-extrabold text-white">{s.stat}</span>
+              <span className="text-sm leading-snug text-white/40">{s.label}</span>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
       {/* ── How it works ── */}
-      <section className="relative z-10 w-full max-w-6xl px-6 pb-24">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">How it works</h2>
-          <p className="mt-3 text-white/40">Up and running in under 10 minutes.</p>
-        </div>
-        <div className="grid gap-8 sm:grid-cols-3">
+      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
+        <ScrollReveal className="mb-14 text-center">
+          <p className="mb-3 text-xs font-bold tracking-widest text-violet-400 uppercase">How it works</p>
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">Up and running in 10 minutes.</h2>
+        </ScrollReveal>
+        <div className="relative grid gap-8 sm:grid-cols-3">
+          {/* connecting line */}
+          <div className="absolute top-8 left-[calc(16.67%+16px)] right-[calc(16.67%+16px)] hidden h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent sm:block" />
           {steps.map((step, i) => (
-            <div key={step.title} className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/15">
-                  <step.icon className="h-5 w-5 text-blue-400" />
+            <ScrollReveal
+              key={step.title}
+              variants={fadeUp}
+              delay={i * 0.12}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl border border-violet-500/30 bg-violet-500/10">
+                  <step.icon className="h-6 w-6 text-violet-400" />
+                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-violet-600 text-[10px] font-bold text-white">
+                    {i + 1}
+                  </span>
                 </div>
-                <span className="text-xs font-bold tracking-widest text-blue-400/60 uppercase">
-                  Step {i + 1}
-                </span>
+                <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                <p className="text-sm leading-relaxed text-white/45">{step.description}</p>
               </div>
-              <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-              <p className="text-sm leading-relaxed text-white/50">{step.description}</p>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
 
       {/* ── Features ── */}
-      <section className="relative z-10 w-full max-w-6xl px-6 pb-24">
-        <div className="mb-12 text-center">
+      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
+        <ScrollReveal className="mb-14 text-center">
+          <p className="mb-3 text-xs font-bold tracking-widest text-violet-400 uppercase">Features</p>
           <h2 className="text-3xl font-bold text-white sm:text-4xl">Everything you need. Nothing you don&apos;t.</h2>
-          <p className="mt-3 text-white/40">Built for solo founders and small teams who don&apos;t have time to waste.</p>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        </ScrollReveal>
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+          variants={staggerContainer}
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+        >
           {features.map((f) => (
-            <div
+            <motion.div
               key={f.name}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm transition-colors hover:border-blue-500/30 hover:bg-white/[0.07]"
+              variants={staggerItem}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="group flex flex-col gap-3 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 transition-colors duration-300 hover:border-violet-500/30 hover:bg-violet-500/5 cursor-default"
             >
-              <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/15">
-                <f.icon className="h-5 w-5 text-blue-400" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-violet-500/20 bg-violet-500/10 transition-colors group-hover:bg-violet-500/20">
+                <f.icon className="h-5 w-5 text-violet-400" />
               </div>
-              <h3 className="mb-2 font-semibold text-white">{f.name}</h3>
-              <p className="text-sm leading-relaxed text-white/50">{f.description}</p>
-            </div>
+              <h3 className="font-semibold text-white">{f.name}</h3>
+              <p className="text-sm leading-relaxed text-white/45">{f.description}</p>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </section>
 
-      {/* ── Social proof ── */}
-      <section className="relative z-10 w-full max-w-6xl px-6 pb-24">
-        <div className="mb-12 text-center">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">Founders who stopped guessing</h2>
-        </div>
-        <div className="grid gap-6 sm:grid-cols-3">
-          {testimonials.map((t) => (
-            <div
+      {/* ── Testimonials ── */}
+      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
+        <ScrollReveal className="mb-14 text-center">
+          <p className="mb-3 text-xs font-bold tracking-widest text-violet-400 uppercase">Social proof</p>
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">Founders who stopped guessing.</h2>
+        </ScrollReveal>
+        <div className="grid gap-4 sm:grid-cols-3">
+          {testimonials.map((t, i) => (
+            <ScrollReveal
               key={t.name}
-              className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm"
+              variants={i === 0 ? slideLeft : i === 2 ? slideRight : fadeUp}
+              delay={i === 1 ? 0.1 : 0}
             >
-              <p className="text-sm leading-relaxed text-white/70">&ldquo;{t.quote}&rdquo;</p>
-              <div className="mt-auto border-t border-white/10 pt-4">
-                <p className="text-sm font-semibold text-white">{t.name}</p>
-                <p className="text-xs text-white/40">{t.company}</p>
+              <div className="flex h-full flex-col gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+                <div className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                  {t.result}
+                </div>
+                <p className="flex-1 text-sm leading-relaxed text-white/60">&ldquo;{t.quote}&rdquo;</p>
+                <div className="border-t border-white/10 pt-4">
+                  <p className="text-sm font-semibold text-white">{t.name}</p>
+                  <p className="text-xs text-white/35">{t.company}</p>
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>
 
       {/* ── FAQ ── */}
-      <section className="relative z-10 w-full max-w-3xl px-6 pb-24">
-        <div className="mb-12 text-center">
+      <section className="relative z-10 w-full max-w-2xl px-6 pb-28">
+        <ScrollReveal className="mb-12 text-center">
+          <p className="mb-3 text-xs font-bold tracking-widest text-violet-400 uppercase">FAQ</p>
           <h2 className="text-3xl font-bold text-white sm:text-4xl">Real questions. Straight answers.</h2>
-        </div>
-        <div>
-          {faqs.map((f) => (
-            <FaqItem key={f.q} q={f.q} a={f.a} />
-          ))}
-        </div>
+        </ScrollReveal>
+        <ScrollReveal delay={0.1}>
+          <div>
+            {faqs.map((f) => <FaqItem key={f.q} q={f.q} a={f.a} />)}
+          </div>
+        </ScrollReveal>
       </section>
 
       {/* ── Bottom CTA ── */}
-      <section className="relative z-10 w-full max-w-6xl px-6 pb-24 text-center">
-        <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 px-8 py-16 backdrop-blur-sm">
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">
-            Stop watching trials expire.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-white/50">
-            Join the waitlist and be first to know when we launch. Early access founders get 3 months free.
-          </p>
-          <div className="mt-8 flex justify-center">
-            <WaitlistForm />
+      <section className="relative z-10 w-full max-w-5xl px-6 pb-28">
+        <ScrollReveal variants={fadeUp}>
+          <div className="relative overflow-hidden rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-900/30 to-blue-900/20 px-8 py-16 text-center backdrop-blur-sm">
+            <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-violet-600/10 via-transparent to-transparent" />
+            {/* Mini logo in CTA */}
+            <div className="relative mb-6 flex justify-center">
+              <LogoMark size={48} />
+            </div>
+            <h2 className="relative text-3xl font-bold text-white sm:text-4xl">
+              Stop watching trials expire.
+            </h2>
+            <p className="relative mx-auto mt-4 max-w-md text-white/45">
+              Early access founders get 3 months free. No credit card required.
+            </p>
+            <div className="relative mt-8 flex justify-center">
+              <WaitlistForm />
+            </div>
           </div>
-        </div>
+        </ScrollReveal>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 w-full border-t border-white/10 px-6 py-6 text-center text-xs text-white/30">
-        © {new Date().getFullYear()} OnboardIQ. All rights reserved.
+      {/* ── Footer ── */}
+      <footer className="relative z-10 w-full border-t border-white/[0.08] px-6 py-8">
+        <div className="mx-auto flex max-w-5xl items-center justify-between text-xs text-white/25">
+          <div className="flex items-center gap-2">
+            <LogoMark size={20} />
+            <span>Onboard<span className="text-violet-400">IQ</span></span>
+          </div>
+          <span>© {new Date().getFullYear()} OnboardIQ. All rights reserved.</span>
+        </div>
       </footer>
     </main>
   )
