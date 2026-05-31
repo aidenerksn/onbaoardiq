@@ -1,0 +1,2 @@
+[functions.rescue-users]
+schedule = "0 * * * *"
