@@ -1,18 +1,27 @@
+"use client"
+
+import { useRouter } from "next/navigation"
 import { LayoutDashboard, Activity, Settings, Zap, LogOut } from "lucide-react"
 import Link from "next/link"
+import { createSupabaseBrowser } from "@/lib/supabaseBrowser"
 
 const nav = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/dashboard/sessions", icon: Activity, label: "Sessions" },
-  { href: "/dashboard/triggers", icon: Zap, label: "Triggers" },
-  { href: "/dashboard/settings", icon: Settings, label: "Settings" },
+  { href: "/dashboard",           icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard/sessions",  icon: Activity,        label: "Sessions"  },
+  { href: "/dashboard/triggers",  icon: Zap,             label: "Triggers"  },
+  { href: "/dashboard/settings",  icon: Settings,        label: "Settings"  },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+  const supabase = createSupabaseBrowser()
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar */}
@@ -40,7 +49,10 @@ export default function DashboardLayout({
 
         {/* Footer */}
         <div className="border-t border-white/10 px-3 py-4">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/40 transition-colors hover:bg-white/10 hover:text-white">
+          <button
+            onClick={handleSignOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/40 transition-colors hover:bg-white/10 hover:text-white"
+          >
             <LogOut className="h-4 w-4 shrink-0" />
             Sign out
           </button>

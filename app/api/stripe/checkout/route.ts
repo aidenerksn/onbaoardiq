@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
       customer: stripeCustomerId,
       customer_email: !stripeCustomerId ? email : undefined,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?welcome=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?setup=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/signup`,
       metadata: {
         customerId: customerId ?? "",
         plan,
